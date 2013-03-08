@@ -18,6 +18,8 @@ These examples assume you have aliased `String` to `RobClancy\String\String`. Yo
 ### String manipulation
 ```php
 $string = new String('Beer!!!'); // How to create your object
+// or
+$string = str('Beer!!!');
 
 // Then you can manipulate with various methods and also use chaining
 $string->lower()->prepend('i love ')->upperFirst()->finish('!');
