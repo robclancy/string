@@ -267,6 +267,26 @@ class String implements Countable, ArrayAccess, IteratorAggregate {
 		return $this->length() >= $offset;
 	}
 
+	public function isNumeric()
+	{
+		return is_numeric($this->string);
+	}
+
+	public function isIp()
+	{
+		return filter_var($this->string, FILTER_VALIDATE_IP) !== false;
+	}
+
+	public function isEmail()
+	{
+		return filter_var($this->string, FILTER_VALIDATE_EMAIL) !== false;
+	}
+
+	public function isUrl()
+	{
+		return filter_var($this->string, FILTER_VALIDATE_URL) !== false;
+	}
+
 	public static function join(array $strings, $delimiter)
 	{
 		return new static(implode($delimiter, $strings));
@@ -280,6 +300,44 @@ class String implements Countable, ArrayAccess, IteratorAggregate {
 		}
 
 		return $strings;
+	}
+
+	/**
+	 * Generate a more truly "random" alpha-numeric string.
+	 *
+	 * @param  int     $length
+	 * @return string
+	 */
+	public static function random($length = 16)
+	{
+		if (function_exists('openssl_random_pseudo_bytes'))
+		{
+			$bytes = openssl_random_pseudo_bytes($length * 2);
+
+			if ($bytes === false)
+			{
+				throw new \RuntimeException('Unable to generate random string.');
+			}
+
+			return substr(str_replace(array('/', '+', '='), '', base64_encode($bytes)), 0, $length);
+		}
+
+		return static::quickRandom($length);
+	}
+
+	/**
+	 * Generate a "random" alpha-numeric string.
+	 *
+	 * Should not be considered sufficient for cryptography, etc.
+	 *
+	 * @param  int     $length
+	 * @return string
+	 */
+	public static function quickRandom($length = 16)
+	{
+		$pool = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+		return substr(str_shuffle(str_repeat($pool, 5)), 0, $length);
 	}
 
 	public function __toString()

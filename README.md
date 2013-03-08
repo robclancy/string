@@ -1,16 +1,31 @@
 # String
 
-intro here guysss
+This library is designed as an alternative way to using PHP's inconsistant string functions without resorting to a simple wrapper. Basically a string object like you find in other languages. Also with a `str` function to make things a little shorter/easier and hide the longer `new String` when working with strings a lot.
 
-## Installation
+This library has 2 dependencies. 
+For handling plurals and creating the slugs: [oodle/inflect ](https://github.com/oodle/inflect)
+For UTF-8 -> ascii: [patchwork/utf8](https://github.com/nicolas-grekas/Patchwork-UTF8)
+
+## Installation and Setup
 To install add the following to your `composer.json` file:
 
 ```json
 "robclancy/string": "dev-master"
 ```
 
-## Examples
+Then you can use it out of the box directly with `RobClancy\String\String` or `str`. Alternatively create an alias like follows...
 
+Native:
+```php
+class_alias('RobClancy\String\String', 'String');
+```
+
+Laravel, add to you aliases array in `app/config/app.php`:
+```php
+'String' => 'RobClancy\String\String',
+```
+
+## Examples
 
 ### Notes
 These examples assume you have aliased `String` to `RobClancy\String\String`. You can also replace `new String(` in these examples with `str(` if you are including `helpers.php`.
