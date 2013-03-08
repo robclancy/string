@@ -2,9 +2,7 @@
 
 This library is designed as an alternative way to using PHP's inconsistant string functions without resorting to a simple wrapper. Basically a string object like you find in other languages. Also with a `str` function to make things a little shorter/easier and hide the longer `new String` when working with strings a lot.
 
-This library has 2 dependencies. 
-For handling plurals and creating the slugs: [oodle/inflect ](https://github.com/oodle/inflect)
-For UTF-8 -> ascii: [patchwork/utf8](https://github.com/nicolas-grekas/Patchwork-UTF8)
+This library has 2 dependencies: [oodle/inflect](https://github.com/oodle/inflect) and [patchwork/utf8](https://github.com/nicolas-grekas/Patchwork-UTF8)
 
 ## Installation and Setup
 To install add the following to your `composer.json` file:
@@ -20,7 +18,7 @@ Native:
 class_alias('RobClancy\String\String', 'String');
 ```
 
-Laravel, add to you aliases array in `app/config/app.php`:
+Laravel, add to your aliases array in `app/config/app.php`:
 ```php
 'String' => 'RobClancy\String\String',
 ```
