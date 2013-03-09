@@ -25,59 +25,139 @@ Laravel, add to your aliases array in `app/config/app.php`:
 'String' => 'RobClancy\String\String',
 ```
 
-## Examples
+## Examples Note: some of these aren't implemented yet, this package won't be ready for use until I write all the tests
 
-### Notes
-These examples assume you have aliased `String` to `RobClancy\String\String`. You can also replace `new String(` in these examples with `str(` if you are including `helpers.php`.
+### Class name to table name
 
-### String manipulation
 ```php
-$string = new String('Beer!!!'); // How to create your object
-// or
-$string = str('Beer!!!');
+class UserGroup {
+	
+	public function getTable()
+	{
+		// We might want to point to the plural, snake case version of this class
+		$class = new String(__CLASS__);
 
-// Then you can manipulate with various methods and also use chaining
-$string->lower()->prepend('i love ')->upperFirst()->finish('!');
+		// Snake case and split
+		$words = $class->snake()->split('_');
 
-echo $string; // 'I love beer!'
+		// Pluralize last word
+		// Note: at a later stage I might have an array object which will be used here to do $words->last()->plural();
+		$words[count($word)-1]->plural();
+
+		// Now return it joined back up
+		return String::join($words, '_');
+	}
+}
 ```
 
-### String checks
+### Ruby styled string replace and python styled slicing
+
+```php
+
+$string = new String('Jason made Basset, it is pretty cool I hear, vote 1 Jason!!');
+
+// String replace, the same as doing the key as $search and the value as $replace in $string->replace($search, $value)
+$string['Jason'] = 'Jason Lewis';
+$string['Basset'] = 'Basset (Better Asset Management)';
+
+// We now want to change the 1 into 9001 but because the array notation here is overloaded to do python style slicing
+// and ruby style replacing we need to force it to the replace, we do this simply by starting the replace with 'r|'
+$string['r|1'] = 9001;
+
+// Lastly let's clean it up and make it end with a single !
+$string->finish('!');
+// or
+$string['!!'] = '!';
+// or
+$string->slice(0, -1);
+// or the same as above with python syntax.
+// Note that with the python style we don't act on the $string object itself and instead return a clone that is sliced so you need to apply it
+$string = $string[':-1'];
+
+echo $string;
+// Outputs: "Jason Lewis made Basset (Better Asset Management), it is pretty cool I hear, vote 9001 Jason Lewis!"
+
+// Just another example of slicing with python
+$string = new String('I like pizza :D');
+$pizza = $string['7:-3'];
+echo $pizza; // pizza
+
+```
+
+### Basic and quick validation with exceptions
+
 ```php
 
 $string = 'Love for laravel <3';
-
-// Booleans
-$string->startsWith('Love');
-$string->contains('something');
-$string->endsWith('<3');
+$string->startsWith('Love');	// true
+$string->contains('something'); // false
+$string->endsWith('<3');		// true
 $string->is('No love for laravel'); // obviously returns false!
+
+// Now to show with and without exceptions
+$string = new String('not_an_email');
+$string->isEmail(); // This will return false
+
+$string->useExceptions(true);
+$string->isEmail(); // This will now throw an exception
+
+// But calling that method is too verbose, so you can use a shortcut on string creation by passing true as the second argument
+$string = new String('still not an email', true);
+
+// Now any check will throw an exception so you can do quick checking and chain it like the following
+try
+{
+	// String must be an email to do with gmail and contain the word awesome
+	$string->isEmail()->endsWith('@gmail.com')->contains('awesome');
+}
+catch (StringException $e) // TODO: change this to whatever I call the exceptions
+{
+	// failed
+}
+
+// Also you can globally set the exceptions flag to be used if one is not specified, defaults to false
+String::throwExceptions(true);
 ```
 
-### Loopage
+### Iteration
+
 ```php
 
-$values = new String('1,2,5,7');
-foreach ($values AS $value)
+$string = new String('It\'s Saturday, I shouldn\'t be working on this and drinking or something');
+
+// You can loop over the string chracter by character
+// Let's make the first letter of each word a capiral just 'cause
+$previousSpace = false;
+foreach ($string AS $offset => $char)
 {
-	var_dump($value); // will return a string object with '1', then ',' etc... just loops through characters
+	if ($char->is(' '))
+	{
+		$previousSpace = true;
+		continue;
+	}
+
+	if ($previousSpace)
+	{
+		$string[$offset] = $char->upper();
+	}
+
+	$previousSpace = false;
 }
 
-foreach ($values->split(',') => $value)
+echo $string; // It\'s Saturday, I Shouldn\'t Be Working On This And Drinking Or Something
+
+// We can do your usual splits, however in this case it splits into String objects like you would expect
+$words = $string->split(' '); // normal array
+
+// Now let's do the same change as above but instead on each word, easier this time
+foreach ($words AS $key => $word)
 {
-	// this time $value will be string objects going through 1, 2, 5 etc...
+	$words[$key] = $word->upperFirst();
 }
 
-// You can call the static String::join method to create a string object from an array of strings
-$string = String::join([1, 2, 5, 7], ','); // now the same object as the original $values
-
-// You can also manipulate by indexes
-$string = new String('Teet Striing');
-$string[2] = 's';
-unset($string[8]);
-isset($string[69]); // returns false, god I'm mature
-echo $string; // 'Test String'
-
+// Basically an alias for implode here
+$string = String::join($words, ' ');
+echo $string; // It\'s Saturday, I Shouldn\'t Be Working On This And Drinking Or Something
 ```
 
 
