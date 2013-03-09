@@ -1,5 +1,7 @@
 # String
 
+A PHP library to manipulate strings via a string object similar to other languages.
+
 This library is designed as an alternative way to using PHP's inconsistant string functions without resorting to a simple wrapper. Basically a string object like you find in other languages. Also with a `str` function to make things a little shorter/easier and hide the longer `new String` when working with strings a lot.
 
 This library has 2 dependencies: [oodle/inflect](https://github.com/oodle/inflect) and [patchwork/utf8](https://github.com/nicolas-grekas/Patchwork-UTF8)

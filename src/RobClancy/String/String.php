@@ -53,7 +53,7 @@ class String implements Countable, ArrayAccess, IteratorAggregate {
 
 	public function length()
 	{
-		return mb_strlen($string);
+		return mb_strlen($this->string);
 	}
 
 	public function count()
@@ -77,14 +77,20 @@ class String implements Countable, ArrayAccess, IteratorAggregate {
 
 	public function lowerFirst()
 	{
-		$this->string = lcfirst($this->string);
+		if ($this->length())
+		{
+			$this[0] = mb_strtolower($this[0]);
+		}
 
 		return $this;
 	}
 
 	public function upperFirst()
 	{
-		$this->string = ucfirst($this->string);
+		if ($this->length())
+		{
+			$this[0] = mb_strtoupper($this[0]);
+		}
 
 		return $this;
 	}
@@ -135,14 +141,14 @@ class String implements Countable, ArrayAccess, IteratorAggregate {
 	{
 		if ($this->length() <= $limit) return $this;
 
-		$this->string = mb_substr($this->string, 0, $limit, 'UTF-8').$end;
+		$this->string = mb_substr($this->string, 0, $limit).$end;
 
 		return $this;
 	}
 
 	public function part($start, $length = null)
 	{
-		$this->string = mb_substr($this->string, $start, $length, 'UTF-8');
+		$this->string = mb_substr($this->string, $start, $length);
 
 		return $this;
 	}
@@ -151,7 +157,7 @@ class String implements Countable, ArrayAccess, IteratorAggregate {
 	{
 		$func = $reverse ? 'mb_strrpos' : 'mb_strpos';
 
-		return $func($this->string, $needle, $offset, 'UTF-8');
+		return $func($this->string, $needle, $offset);
 	}
 
 	public function contains($needle)
@@ -242,7 +248,7 @@ class String implements Countable, ArrayAccess, IteratorAggregate {
 
 	public function offsetSet($offset, $value)
 	{
-		if ($this->length() >= $offset) return;
+		if ($this->length() < $offset) return;
 
 		$string = clone $this;
 		$start = $string->part(0, $offset);
