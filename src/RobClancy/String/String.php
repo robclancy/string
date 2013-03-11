@@ -1,27 +1,38 @@
 <?php namespace RobClancy\String;
 
-use Countable;
-use ArrayAccess;
-use ArrayIterator;
-use Patchwork\Utf8;
 use Inflect\Inflect;
-use IteratorAggregate;
+use Patchwork\Utf8 as u;
 
-class String implements Countable, ArrayAccess, IteratorAggregate {
+// TODO: better exceptions
+
+class String implements \Countable, \ArrayAccess, \IteratorAggregate {
 
 	protected $string;
 
-	public function __construct($string)
+	protected $useExceptions;
+
+	protected static $defaultUseExceptions = false;
+
+	public function __construct($string, $exceptions = null)
 	{
 		if ( ! extension_loaded('mbstring'))
 		{
 			throw new Exception(get_class($this).' needs the mbstring extension.');
 		}
 
-		$this->string = $string;
+		$this->useExceptions($exceptions);
 
-		mb_internal_encoding('UTF-8');
-		mb_regex_encoding('UTF-8');
+		$this->string = $string;
+	}
+
+	public static function defaultUseExceptions($exceptions)
+	{
+		self::$defaultUseExceptions = $exceptions;
+	}
+
+	public function useExceptions($exceptions)
+	{
+		$this->useExceptions = is_null($exceptions) ? self::$defaultUseExceptions : $exceptions;
 	}
 
 	public function append($string)
@@ -44,16 +55,16 @@ class String implements Countable, ArrayAccess, IteratorAggregate {
 	 * @param  string  $value
 	 * @return RobClancy\String\String
 	 */
-	public static function ascii()
+	public function ascii()
 	{
-		$this->string = Utf8::toAscii($this->string);
+		$this->string = u::toAscii($this->string);
 
 		return $this;
 	}
 
 	public function length()
 	{
-		return mb_strlen($this->string);
+		return u::strlen($this->string);
 	}
 
 	public function count()
@@ -63,34 +74,28 @@ class String implements Countable, ArrayAccess, IteratorAggregate {
 
 	public function lower()
 	{
-		$this->string = mb_strtolower($this->string);
+		$this->string = u::strtolower($this->string);
 
 		return $this;
 	}
 
 	public function upper()
 	{
-		$this->string = mb_strtoupper($this->string);
+		$this->string = u::strtoupper($this->string);
 
 		return $this;
 	}
 
 	public function lowerFirst()
 	{
-		if ($this->length())
-		{
-			$this[0] = mb_strtolower($this[0]);
-		}
+		$this->string = u::lcfirst($this->string);
 
 		return $this;
 	}
 
 	public function upperFirst()
 	{
-		if ($this->length())
-		{
-			$this[0] = mb_strtoupper($this[0]);
-		}
+		$this->string = u::ucfirst($this->string);
 
 		return $this;
 	}
@@ -116,68 +121,81 @@ class String implements Countable, ArrayAccess, IteratorAggregate {
 		return $this;
 	}
 
-	public function studly()
+	public function upperWords()
 	{
-		$this->string = ucwords(str_replace('_', '', str_replace(array('-', '_'), ' ', $this->string)));
+		$this->string = u::ucwords($this->string);
 
 		return $this;
 	}
 
+	public function isLower()
+	{
+		return ctype_lower($this->string);
+	}
+
+	public function isUpper()
+	{
+		return ctype_upper($this->string);
+	}
+
+	public function studly()
+	{
+		return $this->replace(array('_', '-'), ' ')->upperWords()->replace(' ', '');
+	}
+
 	public function camel()
 	{
-		$this->string = lcfirst($this->string);
-		return $this->studly();;
+		return $this->studly()->lowerFirst();
 	}
 
 	public function snake($delimiter = '_')
 	{
-		if (ctype_lower($this->string)) return $this;
+		if ($this->isLower()) return $this;
 
 		$this->string = preg_replace('/(.)([A-Z])/', '$1'.$delimiter.'$2', $this->string);
-		return $this->lower(); 
+
+		return $this->lower();
 	}
 
 	public function limit($limit, $end = '...')
 	{
 		if ($this->length() <= $limit) return $this;
 
-		$this->string = mb_substr($this->string, 0, $limit).$end;
-
-		return $this;
+		return $this->part(0, $limit)->append($end);
 	}
 
 	public function part($start, $length = null)
 	{
-		$this->string = mb_substr($this->string, $start, $length);
+		$this->string = u::substr($this->string, $start, $length);
 
 		return $this;
 	}
 
 	public function position($needle, $offset = 0, $reverse = false)
 	{
-		$func = $reverse ? 'mb_strrpos' : 'mb_strpos';
+		$func = $reverse ? 'strrpos' : 'strpos';
 
-		return $func($this->string, $needle, $offset);
+		return u::$func($this->string, $needle, $offset);
 	}
 
 	public function contains($needle)
 	{
 		foreach ((array) $needle AS $n)
 		{
-			if ($this->position($n) !== false) return true;
+			if ($this->position($n) !== false) return $this->returnOrThrow();
 		}
 
-		return false;
+		return $this->returnOrThrow('The string doesn\'t contain one of the provided needles');
 	}
 
 	public function startsWith($needle)
 	{
 		foreach ((array) $needle AS $n)
 		{
-			if ($this->position($n) === 0) return true;
+			if ($this->position($n) === 0) return $this->returnOrThrow();
 		}
 
-		return false;
+		return $this->returnOrThrow('The string doesn\'t start with one of the provided needles');
 	}
 
 	public function endsWith($needle)
@@ -187,17 +205,24 @@ class String implements Countable, ArrayAccess, IteratorAggregate {
 			$string = new static($n);
 			if ($n == $string->part($this->length() - $string->length()))
 			{
-				return true;
+				return $this->returnOrThrow();
 			}
 		}
 
-		return false;
+		return $this->returnOrThrow('The string doesn\'t end with one of the provided needles');
 	}
 
 	public function is($string)
 	{
-		return strcmp($this->_string, $string);
+		if (u::strcmp($this->string, $string))
+		{
+			return $this->returnOrThrow();
+		}
+
+		return $this->returnOrThrow('The string doesn\'t match');
 	}
+
+	// TODO: below here needs to be redone like the above
 
 	public function matches($pattern)
 	{
@@ -291,6 +316,20 @@ class String implements Countable, ArrayAccess, IteratorAggregate {
 	public function isUrl()
 	{
 		return filter_var($this->string, FILTER_VALIDATE_URL) !== false;
+	}
+
+	protected function returnOrThrow($message = false)
+	{
+		// TODO: use a custom exception
+
+		if ($message)
+		{
+			if ($this->useExceptions) throw new \ErrorException($message);
+
+			return false;
+		}
+
+		return $this->useExceptions ? $this : true;
 	}
 
 	public static function join(array $strings, $delimiter)

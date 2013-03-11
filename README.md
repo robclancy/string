@@ -71,7 +71,6 @@ $string['!!'] = '!';
 // or
 $string->slice(0, -1);
 // or the same as above with python syntax.
-// Note that with the python style we don't act on the $string object itself and instead return a clone that is sliced so you need to apply it
 $string = $string[':-1'];
 
 echo $string;
@@ -126,7 +125,7 @@ String::throwExceptions(true);
 $string = new String('It\'s Saturday, I shouldn\'t be working on this and drinking or something');
 
 // You can loop over the string chracter by character
-// Let's make the first letter of each word a capiral just 'cause
+// Let's make the first letter of each word a capital just 'cause
 $previousSpace = false;
 foreach ($string AS $offset => $char)
 {
