@@ -116,7 +116,7 @@ class String implements \Countable, \ArrayAccess, \IteratorAggregate {
 
 	public function slug($delimiter = '-')
 	{
-		$this->string = Inflect::urlify($this->string, $delimiter);
+		$this->string = trim(Inflect::urlify($this->string, $delimiter), $delimiter);
 
 		return $this;
 	}
